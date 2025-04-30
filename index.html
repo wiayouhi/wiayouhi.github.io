@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portfolio | Wia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+      body {
+        font-family: 'Orbitron', sans-serif;
+        background-color: #000;
+        color: white;
+        overflow-x: hidden;
+        /* เปิดใช้งาน Smooth Scrolling */
+        scroll-behavior: smooth;
+      }
+      #preloader {
+        transition: opacity 1s ease;
+      }
+      .glass {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .stars {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -30;
+        background: url('https://raw.githubusercontent.com/VincentGarreau/particles.js/master/demo/media/starfield.png') repeat;
+        animation: moveStars 100s linear infinite;
+      }
+      @keyframes moveStars {
+        from {
+          background-position: 0 0;
+        }
+        to {
+          background-position: 10000px 10000px;
+        }
+      }
+      .particles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: -20;
+      }
+        /* Base class for fade-in-up (starts hidden) */
+      .fade-in-up {
+        opacity: 0;
+        /* ปรับระยะเลื่อนขึ้นให้น่าสังเกตขึ้น */
+        transform: translateY(50px); /* เดิม 30px */
+        /* ปรับระยะเวลาและรูปแบบความเร็ว */
+        transition: opacity 1.2s ease-out, transform 1.2s ease-out; /* เดิม 1s ease */
+      }
+      /* Class added by IntersectionObserver to show */
+      .fade-in-up.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* --- Scroll Margin for Fixed Nav --- */
+      /* เพิ่มระยะห่างด้านบนของ Section ที่ถูกลิงก์ถึง เพื่อไม่ให้ถูก Nav Bar บัง */
+      /* กำหนดให้กับ section ที่มี ID */
+      #projects-section,
+      #discord-section,
+      #contact-section {
+          scroll-margin-top: 80px; /* ปรับค่านี้ตามความสูงของ Nav Bar โดยประมาณ */
+      }
+       /* ส่วน Hero ไม่ต้องมี margin ด้านบน */
+       #hero {
+           scroll-margin-top: 0px;
+       }
+      /* --- End Scroll Margin --- */
+
+
+      /* --- Music Widget Specific Styles --- */
+      #musicWidget {
+            opacity: 0; /* Starts hidden for initial animation */
+            transition: opacity 1s ease, transform 0.3s ease, width 0.3s ease, padding 0.3s ease, height 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+
+            z-index: 40; /* กำหนด z-index ให้สูง */
+            box-sizing: border-box;
+            width: 26rem; /* Default width: w-64 */
+            height: auto;
+            padding: 0.75rem;
+      }
+
+      #musicWidget.collapsed {
+           width: 50px;
+           height: 50px;
+           padding: 0;
+           overflow: hidden;
+           align-items: center;
+           justify-content: center;
+      }
+
+      #musicWidget .widget-content {
+            flex-grow: 1;
+            width: 100%;
+      }
+
+       #musicWidget.collapsed .widget-content {
+            display: none;
+       }
+
+      #widgetToggle {
+           position: absolute;
+           top: 8px;
+           right: 8px;
+           z-index: 50;
+           transition: all 0.3s ease;
+      }
+
+      #musicWidget.collapsed #widgetToggle {
+           top: 13px;
+           right: 13px;
+           transform: translateX(0) translateY(0) !important;
+      }
+
+        /* Initial state for animation */
+      #musicWidget {
+            opacity: 0;
+            left: 50%;
+            transform: translateX(-50%);
+      }
+      /* State after initial animation completes */
+      #musicWidget.show {
+            opacity: 1;
+      }
+      /* --- End Music Widget Specific Styles --- */
+
+      /* --- Discord Status Specific Styles --- */
+      #discordStatusContent {
+            /* Minimum height to prevent layout shift while loading */
+            min-height: 120px; /* ปรับให้เหมาะสมกับเนื้อหาที่คุณจะแสดง */
+            width: 100%;
+            display: flex;
+            flex-direction: column; /* จัดเนื้อหาแนวตั้ง */
+            align-items: flex-start; /* ชิดซ้าย */
+      }
+
+      .discord-status-indicator {
+          display: inline-block;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          margin-right: 8px;
+          vertical-align: middle; /* จัดแนวตั้งกลางกับข้อความ */
+      }
+
+      .discord-status-indicator.online { background-color: #3ba55d; } /* Discord Green */
+      .discord-status-indicator.idle { background-color: #faa61a; } /* Discord Yellow */
+      .discord-status-indicator.dnd { background-color: #ed4245; } /* Discord Red (Do Not Disturb) */
+      .discord-status-indicator.streaming { background-color: #593695; } /* Discord Purple (Streaming) */
+
+
+      .discord-user-info {
+          font-size: 1.1rem; /* text-lg */
+          font-weight: 600;
+          color: #d1d5db; /* gray-300 */
+          margin-bottom: 8px;
+      }
+
+      .discord-activity {
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          width: 100%;
+          text-align: left;
+      }
+
+      .discord-activity h4 {
+          font-size: 1rem;
+          font-weight: 600;
+          color: #c084fc; /* Purple-300 */
+          margin-bottom: 4px;
+      }
+
+      .discord-activity p {
+          font-size: 0.875rem; /* text-sm */
+          color: #d1d5db; /* gray-300 */
+          margin-bottom: 4px;
+      }
+
+      .discord-activity img {
+          width: 40px;
+          height: 40px;
+          border-radius: 8px;
+          margin-right: 8px;
+          vertical-align: middle;
+          object-fit: cover; /* ครอบคลุมพื้นที่ */
+      }
+
+      .spotify-details {
+            display: flex;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 0.875rem;
+            color: #d1d5db;
+      }
+
+      .spotify-details img {
+          width: 30px;
+          height: 30px;
+          border-radius: 4px;
+          margin-right: 8px;
+          object-fit: cover;
+      }
+
+      .spotify-text {
+          flex-grow: 1;
+      }
+
+      .spotify-text p {
+          margin: 0; /* ลบ margin default */
+      }
+
+      .spotify-text a {
+          color: #1db954; /* Spotify green */
+          text-decoration: none;
+      }
+      .spotify-text a:hover {
+          text-decoration: underline;
+      }
+      /* --- End Discord Status Specific Styles --- */
+
+       /* --- Scroll Widget Specific Styles --- */
+      #scroll-activated-widget {
+          /* Initial state hidden in HTML class list */
+          /* Use transition-all in HTML for animation */
+          transform: translateY(20px); /* เริ่มต้นอยู่ต่ำกว่าตำแหน่งจริงเล็กน้อย เพื่ออนิเมชัน slide up */
+      }
+
+      #scroll-activated-widget.show-widget {
+          opacity: 1;
+          pointer-events: auto; /* อนุญาตให้คลิกได้เมื่อแสดง */
+          transform: translateY(0); /* เลื่อนกลับมาตำแหน่งเดิม */
+      }
+      /* --- End Scroll Widget Specific Styles --- */
+
+      /* --- Section Highlight Animation on Nav Click --- */
+      /* เพิ่ม Class นี้ให้กับ Section เป้าหมายเมื่อคลิก Nav Link */
+      .section-highlight {
+          /* ตัวอย่าง: สร้าง Box Shadow เรืองแสงสีม่วงรอบ Section */
+          box-shadow: 0 0 20px 8px rgba(192, 132, 252, 0.6); /* Purple-300 with stronger glow */
+          transition: box-shadow 0.5s ease-out; /* ทำให้ box-shadow มี transition */
+      }
+      /* สามารถเพิ่ม @keyframes สำหรับอนิเมชันที่ซับซ้อนขึ้นได้ ถ้าต้องการ */
+      /* ตัวอย่าง: ถ้าต้องการให้เรืองแสงกระพริบ */
+      @keyframes highlight-pulse {
+          0% { box-shadow: 0 0 20px 8px rgba(192, 132, 252, 0.0); }
+          50% { box-shadow: 0 0 20px 8px rgba(192, 132, 252, 0.6); }
+          100% { box-shadow: 0 0 20px 8px rgba(192, 132, 252, 0.0); }
+       }
+       .section-highlight {
+           animation: highlight-pulse 1.5s ease-out; /* ใช้ animation */
+           box-shadow: none; /* ลบ transition ถ้าใช้ animation */
+       } */
+
+      /* --- End Section Highlight Animation --- */
+
+    </style>
+  </head>
+  <body>
+
+    <nav class="fixed top-0 left-0 w-full z-30 bg-black/50 backdrop-filter backdrop-blur-lg py-4 px-6">
+        <div class="container mx-auto flex items-center justify-between">
+            <a href="#hero" id="nav-logo" class="text-xl font-bold text-purple-400 hover:text-purple-300 transition opacity-0">Wia</a> <div id="nav-links-container" class="hidden md:flex items-center space-x-6">
+                <a href="#hero" class="text-gray-300 hover:text-purple-300 transition">หน้าแรก</a>
+                <a href="#projects-section" class="text-gray-300 hover:text-purple-300 transition">ผลงาน</a>
+                <a href="#discord-section" class="text-gray-300 hover:text-purple-300 transition">สถานะ Discord</a>
+                <a href="#contact-section" class="text-gray-300 hover:text-purple-300 transition">ติดต่อ</a>
+                </div>
+
+             </div>
+    </nav>
+    <div class="stars"></div>
+    <canvas class="particles" id="bgParticles"></canvas>
+
+    <div id="preloader" class="fixed inset-0 bg-black flex justify-center items-center z-50">
+      <div class="text-center animate-pulse">
+        <h1 class="text-4xl md:text-6xl text-purple-400 font-bold">เข้าสู่จักรวาลของ Wia...</h1>
+        <div class="mt-4 w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+      </div>
+    </div>
+
+    <section id="hero" class="relative h-screen flex flex-col justify-center items-center text-center">
+      <h1 id="heroTitle" class="text-5xl md:text-7xl font-bold text-purple-400 drop-shadow-lg fade-in-up">
+        สวัสดี! ผมคือ Wia
+      </h1>
+      <p id="heroSub" class="mt-4 text-lg md:text-2xl text-gray-300 fade-in-up">
+        นักพัฒนาเว็บไซต์ที่ชอบกาแล็กซี อนิเมะ และความล้ำยุค
+      </p>
+      <video autoplay loop muted class="absolute top-0 left-0 w-full h-full object-cover opacity-20 -z-10">
+        <source src="space.mp4" type="video/mp4" />
+      </video>
+      <div class="absolute inset-0 bg-gradient-to-b from-black via-purple-900/30 to-black -z-10"></div>
+    </section>
+
+    <section id="projects-section" class="px-6 py-20 bg-gradient-to-b from-black to-purple-950">
+      <h2 class="text-4xl font-bold text-center mb-10 text-purple-300 fade-in-up">ผลงานของผม</h2>
+      <div id="projectsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          <p id="loadingProjects" class="text-center text-gray-400 col-span-full">กำลังโหลดผลงานจาก GitHub...</p>
+          </div>
+    </section>
+
+    <section id="discord-section" class="py-20 px-6 bg-gradient-to-t from-black to-purple-950 text-center">
+      <h2 class="text-4xl font-bold text-purple-300 mb-8 fade-in-up">สถานะ Discord</h2>
+      <div class="flex justify-center">
+        <div class="glass p-6 rounded-2xl max-w-md w-full shadow-xl fade-in-up">
+          <div id="discordStatusContent" class="min-h-[120px] flex items-center justify-center"> <p class="text-gray-400">กำลังโหลดสถานะ...</p>
+          </div>
+          <p class="text-gray-400 text-sm mt-4">ข้อมูลนี้ดึงแบบเรียลไทม์ (โดยประมาณ) จาก Discord </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact-section" class="py-20 px-6 text-center bg-black">
+      <h2 class="text-4xl font-bold text-purple-300 mb-6 fade-in-up">ติดต่อผม</h2>
+      <p class="text-gray-400 mb-6 fade-in-up">สามารถทักมาคุยกันได้ที่</p>
+      <a
+        href="https://discord.com/users/902739412172046427"
+        class="inline-block bg-purple-700 text-white py-3 px-6 rounded-full shadow-lg hover:bg-purple-600 transition fade-in-up"
+        >Discord</a
+      >
+    </section>
+
+    <footer class="glass text-gray-400 py-10 px-6"> <div class="container mx-auto flex flex-col md:flex-row items-center md:items-start justify-between"> <div class="mb-6 md:mb-0 fade-in-up"> <img src="path/to/your/logo.png" alt="Wia Logo" class="h-12 mx-auto md:mx-0" onerror="this.style.display='none'; document.getElementById('footer-text-logo').style.display='block';"> <span id="footer-text-logo" class="text-3xl font-bold text-purple-400 block md:inline" style="display: none;">Wia</span>
+            </div>
+
+            <div class="flex flex-col items-center md:items-end">
+              <div class="flex justify-center md:justify-end gap-5 mb-4 fade-in-up items-center">
+                  <a href="https://github.com/wiayouhi" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition bg-gray-700">
+                      <i class="fab fa-github text-white text-xl"></i>
+                  </a>
+                  <a href="https://discord.com/users/902739412172046427" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition" style="background-color: #5865f2;">
+                      <i class="fab fa-discord text-white text-xl"></i>
+                  </a>
+                  <a href="https://www.facebook.com/thanawatwia" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition" style="background-color: #1877f2;">
+                      <i class="fab fa-facebook-f text-white text-xl"></i>
+                  </a>
+                  <a href="https://www.instagram.com/thanawat.wia" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition" style="background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);">
+                      <i class="fab fa-instagram text-white text-xl"></i>
+                  </a>
+                  <a href="https://linktr.ee/thanawatwia" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition bg-gray-600">
+                      <i class="fas fa-link text-white text-xl"></i>
+                  </a>
+              </div>
+         
+              <div class="flex justify-center w-full mt-4 fade-in-up">
+                <img src="https://count.getloli.com/@wi/a?name=wia&theme=rule34&padding=7&offset=0&align=top&scale=1&pixelated=1&darkmode=auto" alt="View Counter" class="h-12"> </div>
+                
+              <div class="fade-in-up mt-4"> <p class="text-sm text-gray-500">© 2024 Wia. All rights reserved.</p>
+              </div>
+          </div>
+        </div>
+    </footer>
+    <div id="scroll-activated-widget" class="fixed bottom-6 right-6 glass p-3 rounded-xl shadow-lg z-35 flex items-center space-x-3 opacity-0 pointer-events-none transition-all duration-500 ease-in-out"> <img src="logo.png" alt="Wia Logo" class="h-10 rounded-full"> <a href="#contact-section" class="text-purple-300 hover:text-purple-200 text-sm font-semibold">
+            ติดต่อผม!
+        </a>
+    </div>
+    <div id="version-widget" class="fixed bottom-6 left-6 glass p-3 rounded-xl shadow-lg z-20"> <p class="text-sm text-gray-400">
+            Version: <span id="website-version">🟢 1.0.0</span> </p>
+    </div>
+    <div id="musicWidget" class="glass p-3 rounded-xl shadow-lg w-64 md:w-80">
+        <button id="widgetToggle" class="bg-purple-700 rounded-full hover:bg-purple-600 transition text-white text-xs z-50 flex items-center justify-center w-6 h-6">
+           </button>
+        <div class="widget-content">
+            <p class="text-purple-200 text-sm mb-2 text-center mt-2">...Playing Now...</p>
+             <iframe
+              style="border-radius:8px;"
+              src="https://open.spotify.com/embed/artist/0AvGycOEDZTaBFLCaiGd9S?utm_source=generator&theme=0"
+              width="100%"
+              height="100"
+              frameBorder="0"
+              allowfullscreen=""
+              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+              loading="lazy">
+            </iframe>
+        </div>
+    </div>
+    <script>
+      // Anime.js Animations (Hero Section)
+      anime({
+        targets: '#heroTitle',
+        translateY: [-50, 0],
+        opacity: [0, 1],
+        duration: 1200,
+        easing: 'easeOutExpo'
+      });
+      anime({
+        targets: '#heroSub',
+        translateY: [50, 0],
+        opacity: [0, 1],
+        delay: 500,
+        duration: 1000,
+        easing: 'easeOutExpo'
+      });
+
+      // Preloader Remove and Widget Animation
+      window.addEventListener('load', () => {
+        const preloader = document.getElementById('preloader');
+        const musicWidget = document.getElementById('musicWidget');
+        const widgetToggle = document.getElementById('widgetToggle');
+
+        const showWidget = () => {
+              if (musicWidget) {
+                  musicWidget.classList.add('show');
+                  // Initial state is open
+                  musicWidget.classList.remove('collapsed');
+                  // Set initial icon
+                  if (widgetToggle) {
+                      widgetToggle.innerHTML = '<'; // Left arrow when open
+                  }
+              }
+        };
+
+        if (preloader) {
+          preloader.classList.add('opacity-0');
+          setTimeout(() => {
+              preloader.remove();
+              showWidget(); // Show widget after preloader removed
+          }, 1000);
+        } else {
+              showWidget(); // Show widget immediately if no preloader
+        }
+
+        // --- Anime.js Animation for Navigation Bar (on load) ---
+        const navLogo = document.getElementById('nav-logo'); // Target the logo link by ID
+        const navLinks = document.querySelectorAll('#nav-links-container a'); // Target all links in the nav links container
+
+        // Animate logo fade in and slide down
+        anime({
+          targets: navLogo,
+          opacity: [0, 1],
+          translateY: [-20, 0],
+          duration: 800,
+          easing: 'easeOutQuad'
+        });
+
+        // Animate nav links fade in and slide down with stagger
+        // This animation runs regardless of screen size, but the elements are only visible on md+ due to Tailwind 'hidden md:flex'
+        anime({
+          targets: navLinks,
+          opacity: [0, 1],
+          translateY: [-20, 0],
+          duration: 800,
+          easing: 'easeOutQuad',
+          delay: anime.stagger(100, { start: 300 }) // Stagger delay starting after the logo animation begins
+        });
+        // --- End Navigation Bar Animation ---
+
+
+          // Add click listener to toggle button for Music Widget
+        const widgetContent = musicWidget ? musicWidget.querySelector('.widget-content') : null;
+
+        if (widgetToggle && musicWidget && widgetContent) {
+            widgetToggle.addEventListener('click', () => {
+                const isCollapsed = musicWidget.classList.toggle('collapsed');
+
+                // Toggle button icon
+                if (isCollapsed) {
+                    widgetToggle.innerHTML = '>'; // Right arrow when collapsed
+                    // To ensure smooth collapse, hide content immediately
+                     widgetContent.style.display = 'none';
+                } else {
+                    widgetToggle.innerHTML = '<'; // Left arrow when open
+                    // To ensure smooth expansion, show content just before transition
+                     widgetContent.style.display = 'block'; // Or whatever the default display is (flex/grid)
+                }
+            });
+        }
+
+      });
+
+      // Simple Particle Background Animation and Scroll-Linked Alpha
+      const canvas = document.getElementById('bgParticles');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight; // แก้กลับเป็น InnerHeight เพื่อให้ครอบคลุมเต็มจอ
+
+      window.addEventListener('resize', () => {
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+          // Optional: re-initialize particles on resize if distribution should change
+      });
+
+      // Define particles outside animation loop
+      const particles = Array.from({ length: 100 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: Math.random() * 1.5 + 0.5,
+        speedX: (Math.random() - 0.5) * 0.5,
+        speedY: (Math.random() - 0.5) * 0.5,
+      }));
+
+      let particleAlpha = 0.6; // Base alpha for particles
+      const scrollMaxForAlpha = 500; // Scroll distance over which alpha changes
+
+      function animateParticles() {
+        // Update particle color with current alpha
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = `rgba(180, 120, 255, ${particleAlpha})`; // Use the updated alpha
+
+        particles.forEach(p => {
+          p.x += p.speedX;
+          p.y += p.speedY;
+
+          // Wrap particles around edges
+          if (p.x < 0) p.x = canvas.width;
+          if (p.x > canvas.width) p.x = 0;
+          if (p.y < 0) p.y = canvas.height;
+          if (p.y > canvas.height) p.y = 0;
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fill(); // Fill with the color using particleAlpha
+        });
+        requestAnimationFrame(animateParticles);
+      }
+      animateParticles(); // Start particle animation loop
+
+
+      // Scroll Animation (for sections and dynamically added elements) via IntersectionObserver
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('show');
+            // Optional: Unobserve once shown if you only want it to animate once
+            // observer.unobserve(entry.target);
+          } else {
+            // Optional: Remove 'show' if you want the animation to repeat on scroll back
+            // entry.target.classList.remove('show');
+          }
+        });
+      }, {
+        threshold: 0.1 // Trigger when 10% of the element is visible
+      });
+
+      // Observe elements that exist on page load with the 'fade-in-up' class
+      // This includes elements in main sections and the footer
+      // Elements in the fixed nav bar are animated by Anime.js on load, not observed here
+      // The GitHub fetch logic observes dynamically added elements separately.
+      document.querySelectorAll('.fade-in-up').forEach(el => {
+          // Exclude the loading message itself from initial observation if it exists
+          if (el.id !== 'loadingProjects') {
+                observer.observe(el);
+          }
+      });
+
+
+      // --- Scroll-Activated Widget Logic and Particle Alpha Update ---
+      const scrollWidget = document.getElementById('scroll-activated-widget');
+      const heroSection = document.getElementById('hero');
+      // Trigger point for scroll widget: 80% of the hero section height
+      const scrollWidgetTriggerPoint = heroSection ? heroSection.offsetHeight * 0.8 : 500; // Fallback to 500px if hero not found
+
+      window.addEventListener('scroll', () => {
+          const scrolled = window.scrollY;
+
+          // Update particle alpha based on scroll position (up to scrollMaxForAlpha)
+          // Increase alpha from 0.6 to 1.0 over 500px scroll
+          if (scrolled < scrollMaxForAlpha) {
+               particleAlpha = 0.6 + (scrolled / scrollMaxForAlpha) * 0.4;
+          } else {
+               particleAlpha = 1.0; // Stay at max alpha after scrolling past trigger
+          }
+           particleAlpha = Math.max(0.6, particleAlpha); // Ensure alpha is never less than base 0.6
+
+
+          // Check for Scroll Widget visibility trigger
+          if (scrolled > scrollWidgetTriggerPoint) {
+              if (!scrollWidget.classList.contains('show-widget')) {
+                  scrollWidget.classList.add('show-widget');
+              }
+          }
+          // Check if scrolling UP past the trigger point for the widget
+          else {
+               if (scrollWidget.classList.contains('show-widget')) {
+                  scrollWidget.classList.remove('show-widget');
+               }
+          }
+      });
+      // --- End Scroll-Activated Widget Logic and Particle Alpha Update ---
+
+
+      // --- Section Highlight Animation on Nav Click ---
+      // เพิ่ม Click Listener ให้กับลิงก์ใน Nav Bar ที่ชี้ไปยัง ID ของ Section
+      document.querySelectorAll('nav a[href^="#"]').forEach(link => {
+          link.addEventListener('click', (e) => {
+              // ปล่อยให้ Default Smooth Scroll ทำงาน
+              const targetId = link.getAttribute('href').substring(1); // เอาแค่ ID (ลบ # ออก)
+              const targetElement = document.getElementById(targetId);
+
+              if (targetElement) {
+                  // รอสักครู่เพื่อให้ Scroll ไปถึง Section ก่อน แล้วค่อย Trigger Animation
+                  // เวลาที่รอ อาจต้องปรับให้เหมาะสมกับความเร็ว Smooth Scroll
+                  setTimeout(() => {
+                      // ลบ Class highlight ออกจาก Section อื่นๆ ที่อาจมีอยู่
+                      document.querySelectorAll('.section-highlight').forEach(el => el.classList.remove('section-highlight'));
+
+                      // เพิ่ม Class highlight ให้กับ Section เป้าหมาย
+                      targetElement.classList.add('section-highlight');
+
+                      // ลบ Class highlight ออกหลังจากผ่านไปสักครู่ (นานกว่า Animation duration เล็กน้อย)
+                      // Animation duration ของ box-shadow คือ 0.5s ในตัวอย่าง
+                      setTimeout(() => {
+                          targetElement.classList.remove('section-highlight');
+                      }, 700); // ลบ Class หลังจาก 700ms (เพื่อให้ Animation 0.5s แสดงผลครบ)
+
+                  }, 500); // รอ 500ms ก่อนเริ่ม Animation Highlight (เพื่อให้ Scroll ไปถึงก่อน)
+              }
+          });
+      });
+      // --- End Section Highlight Animation ---
+
+
+      // --- GitHub Projects Fetching ---
+      const githubUsername = 'wiayouhi'; // <<< **เปลี่ยนตรงนี้เป็น GitHub Username ของคุณ**
+      const projectsGrid = document.getElementById('projectsGrid');
+      const loadingProjectsMessage = document.getElementById('loadingProjects'); // Renamed to avoid conflict
+
+      // Fetch public repos, sorted by creation date, limit to maybe 6-9
+      const githubReposApiUrl = `https://api.github.com/users/${githubUsername}/repos?sort=created&per_page=9`;
+
+      // Check if username is placeholder
+      if (githubUsername === 'YOUR_GITHUB_USERNAME') {
+            if (loadingProjectsMessage) loadingProjectsMessage.remove();
+             if (projectsGrid) {
+                projectsGrid.innerHTML = '<p class="text-center text-yellow-400 col-span-full">กรุณาแก้ไข "YOUR_GITHUB_USERNAME" ในโค้ด JavaScript</p>';
+             }
+      } else {
+            fetch(githubReposApiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        // Handle non-2xx responses (e.g., 404 user not found, 403 rate limit)
+                        throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(repos => {
+                    // Remove loading message
+                    if (loadingProjectsMessage) {
+                        loadingProjectsMessage.remove();
+                    }
+
+                    if (repos.length === 0) {
+                        projectsGrid.innerHTML = '<p class="text-center text-gray-400 col-span-full">ไม่พบผลงานใน GitHub Public Repositories</p>';
+                        return;
+                    }
+
+                    // Loop through repos and create HTML
+                    repos.forEach(repo => {
+                        // Optional: Filter out forks if you only want original projects
+                        // if (repo.fork) {
+                        //      return; // Skip this repo if it's a fork
+                        // }
+                        // Optional: Filter by topic or name if you have specific projects to show
+                        // if (!repo.topics.includes('portfolio-showcase')) {
+                        //      return;
+                        // }
+
+
+                        const projectElement = document.createElement('a'); // Use 'a' tag for a clickable link
+                        projectElement.href = repo.html_url; // Link to the repo page
+                        projectElement.target = "_blank"; // Open in new tab
+                        projectElement.rel = "noopener noreferrer"; // Security best practice for target="_blank"
+
+                        projectElement.classList.add(
+                            'glass',
+                            'rounded-2xl',
+                            'p-5',
+                            'shadow-lg',
+                            'transition-transform',
+                            'hover:scale-105',
+                            'fade-in-up', // Add the fade-in class for scroll animation
+                            'block' // Make the anchor a block element to fill the grid item
+                        );
+
+                        projectElement.innerHTML = `
+                            <div class="aspect-video bg-gray-700/30 rounded-xl mb-3 flex items-center justify-center text-gray-500 text-sm">
+                                <span class="text-purple-400">${repo.language || 'Code'}</span> Repository
+                            </div>
+                            <h3 class="text-xl font-semibold text-purple-100 mb-2">${repo.name}</h3>
+                            <p class="text-sm text-gray-300">${repo.description || 'ไม่มีคำอธิบาย'}</p>
+                             ${repo.language ? `<p class="text-xs text-gray-500 mt-2">ภาษาหลัก: ${repo.language}</p>` : ''}
+                        `;
+
+                        projectsGrid.appendChild(projectElement);
+
+                        // *** Observe the newly created element for fade-in animation ***
+                        observer.observe(projectElement);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching GitHub repos:", error);
+                    if (loadingProjectsMessage) {
+                        loadingProjectsMessage.remove();
+                    }
+                    if (projectsGrid) {
+                     projectsGrid.innerHTML = `<p class="text-center text-red-400 col-span-full">เกิดข้อผิดพลาดในการโหลดผลงาน: ${error.message}</p>`;
+                    }
+                });
+      }
+
+      // --- End GitHub Projects Fetching ---
+
+      // --- Discord Status Fetching ---
+      const discordUserId = '902739412172046427'; // <<< Discord User ID ของคุณ
+      const discordStatusContent = document.getElementById('discordStatusContent');
+      const lanyardApiUrl = `https://api.lanyard.rest/v1/users/${discordUserId}`;
+
+        // Check if user ID is placeholder (though it's a real ID, good practice)
+        if (discordUserId === 'YOUR_DISCORD_USER_ID') { // Add YOUR_DISCORD_USER_ID placeholder check if needed
+             if (discordStatusContent) {
+                 discordStatusContent.innerHTML = '<p class="text-center text-yellow-400 w-full">กรุณาแก้ไข Discord User ID ในโค้ด JavaScript</p>';
+             }
+        } else {
+            fetch(lanyardApiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Lanyard API error: ${response.status} ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data || !data.success || !data.data) {
+                         throw new Error("Invalid data from Lanyard API");
+                    }
+
+                    const statusData = data.data;
+                    discordStatusContent.innerHTML = ''; // Clear loading message
+
+                    // Basic User Info and Status
+                    let statusHtml = `
+                        <div class="discord-user-info">
+                            <span class="discord-status-indicator ${statusData.discord_status || 'offline'}"></span>
+                            ${statusData.discord_user ? statusData.discord_user.username : 'Discord User'}
+                        </div>
+                    `;
+
+                    // Display activities (e.g., playing a game, listening to Spotify)
+                    if (statusData.activities && statusData.activities.length > 0) {
+                        statusData.activities.forEach(activity => {
+                             statusHtml += `<div class="discord-activity">`;
+                            // Game activity (type 0)
+                            if (activity.type === 0 && activity.name !== 'Spotify') {
+                                statusHtml += `<h4>Playing ${activity.name}</h4>`;
+                                if (activity.state) statusHtml += `<p>${activity.state}</p>`;
+                                if (activity.details) statusHtml += `<p>${activity.details}</p>`;
+                                // Display large image if available
+                                if (activity.assets && activity.assets.large_image) {
+                                     // Lanyard large_image for games can be 'spotify:...', 'mp:external/...' or 'app:...', handle accordingly
+                                     const largeImageUrl = activity.assets.large_image.startsWith('spotify:') ?
+                                         `https://i.scdn.co/image/${activity.assets.large_image.replace('spotify:', '')}` :
+                                         (activity.assets.large_image.startsWith('mp:external/') ?
+                                              `https://media.discordapp.net/${activity.assets.large_image.replace('mp:', '')}` :
+                                              `https://cdn.discordapp.com/app-assets/${activity.application_id}/${activity.assets.large_image}.png`
+                                            );
+                                           statusHtml += `<img src="${largeImageUrl}" alt="${activity.assets.large_text || 'Activity image'}">`;
+                                 }
+                            }
+                            // Streaming activity (type 1)
+                            else if (activity.type === 1) {
+                                statusHtml += `<h4 class="text-purple-400">Streaming ${activity.name}</h4>`; // Highlight streaming
+                                if (activity.details) statusHtml += `<p>${activity.details}</p>`;
+                                if (activity.state) statusHtml += `<p>On: ${activity.state}</p>`;
+                                if (activity.url) statusHtml += `<p><a href="${activity.url}" target="_blank" rel="noopener noreferrer" class="text-purple-300 hover:underline">Watch Stream</a></p>`;
+                            }
+                            // Listening activity (Spotify - type 2)
+                            else if (activity.type === 2 && activity.name === 'Spotify') {
+                                // Find the Spotify activity details if available (sometimes it's a separate activity object)
+                                const spotifyData = statusData.spotify; // Lanyard often puts Spotify data directly here
+                                if (spotifyData) {
+                                     statusHtml += `<h4>Listening to Spotify</h4>`;
+                                     statusHtml += `
+                                         <div class="spotify-details">
+                                             ${spotifyData.album_art_url ?
+                                                 `<img src="${spotifyData.album_art_url}" alt="Album Art">` : ''
+                                               }
+                                             <div class="spotify-text">
+                                                 ${spotifyData.song ? `<p><strong>${spotifyData.song}</strong></p>` : ''}
+                                                 ${spotifyData.artist ? `<p>by ${spotifyData.artist}</p>` : ''}
+                                                  ${spotifyData.timestamps ? `<p>${Math.floor((Date.now() - spotifyData.timestamps.start) / 1000)}s elapsed</p>` : ''}
+                                             </div>
+                                         </div>
+                                     `;
+                                }
+                            }
+                             // Custom Status (type 4) - Lanyard puts this in statusData.activities, but also statusData.activities[0] if it's the first
+                            else if (activity.type === 4) {
+                                 if (activity.state) {
+                                     statusHtml += `<h4>Custom Status</h4>`;
+                                     statusHtml += `<p>${activity.state}</p>`;
+                                 }
+                                 // You could also add emoji here if available in the activity object
+                            }
+                            // Add more activity types (Watching - type 3, Competing - type 5) as needed
+
+                            statusHtml += `</div>`; // Close discord-activity
+                        });
+                    } else {
+                         // If no activities, maybe show last known status or just the online status
+                           if (statusData.discord_status === 'offline') {
+                                statusHtml += `<div class="discord-activity"><p>Offline</p></div>`;
+                           } else {
+                                statusHtml += `<div class="discord-activity"><p>No activity</p></div>`;
+                           }
+                    }
+
+
+                    discordStatusContent.innerHTML += statusHtml; // Append status details
+
+                })
+                .catch(error => {
+                    console.error("Error fetching Lanyard status:", error);
+                     if (discordStatusContent) {
+                         discordStatusContent.innerHTML = `<p class="text-center text-red-400 w-full">เกิดข้อผิดพลาดในการโหลดสถานะ Discord</p>`;
+                     }
+                });
+        }
+      // --- End Discord Status Fetching ---
+
+
+    </script>
+    
+  </body>
+</html>
